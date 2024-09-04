@@ -15,6 +15,7 @@ int main(void) {
   int digitCount = count_digits(visa);
 
   // calculate checksum
+
   for (int i = 0; i < digitCount; i++) {
     long long truncNum = visa / pow(10, i);
     int currDigit = truncNum % 10;
