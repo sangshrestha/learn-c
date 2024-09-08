@@ -32,10 +32,12 @@ int main(int argc, char **argv)
         cipher[length] = 0;
 
         printf("ciphertext: %s\n", cipher);
+        return 0;
     }
     else
     {
         printf("Usage: caesar key\n");
+        return 1;
     }
 }
 
