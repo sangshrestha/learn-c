@@ -12,8 +12,6 @@ typedef struct
     int votes;
 } candidate;
 
-void print_candidates(candidate candidates[]);
-
 // Array of candidates
 candidate candidates[MAX];
 
@@ -80,13 +78,5 @@ int main(int argc, char **argv)
         {
             printf("%s\n", candidates[i].name);
         }
-    }
-}
-
-void print_candidates(candidate candidates[])
-{
-    for (int i = 0; i < MAX; i++)
-    {
-        printf("%s: %d\n", candidates[i].name, candidates[i].votes);
     }
 }
