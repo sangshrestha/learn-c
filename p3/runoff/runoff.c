@@ -6,11 +6,13 @@
 #define MAX 9
 #define RANK_TOTAL 3
 #define MAX_VOTERS 9
+#define NAME_LENGTH 31
 
 // Candidates have name and vote count
 typedef struct
 {
-    char name[31];
+    char name[NAME_LENGTH];
+    int votes;
 } candidate;
 
 // Ballot
@@ -42,7 +44,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < argc; i++)
     {
         // Assign name
-        strcpy_s(candidates[i].name, 31, argv[i + 1]);
+        strcpy_s(candidates[i].name, NAME_LENGTH, argv[i + 1]);
+        candidates[i].votes = 0;
     }
 
     char voter_count[3];
@@ -58,10 +61,10 @@ int main(int argc, char **argv)
     for (int i = 0; i < voter_count_int; i++)
     {
 
-        // Loop for ranks
+        // Loop for ballot
         for (int j = 0; j < RANK_TOTAL; j++)
         {
-            char vote[31];
+            char vote[NAME_LENGTH];
             const int INPUT_SIZE = sizeof(vote);
 
             printf("Rank %d: ", j + 1);
@@ -76,7 +79,7 @@ int main(int argc, char **argv)
                 if (strcmp(vote, candidates[k].name) == 0)
                 {
                     candidate_found = i;
-                    strcpy_s(ballots[i].candidates[j].name, 31, candidates[k].name);
+                    strcpy_s(ballots[i].candidates[j].name, NAME_LENGTH, candidates[k].name);
                 }
             }
 
@@ -90,14 +93,92 @@ int main(int argc, char **argv)
         printf("\n");
     }
 
-    // Print Winners
-    for (int i = 0; i < MAX_VOTERS; i++)
-    {
-        if (strlen(ballots[i].candidates[0].name) > 0)
-        {
+    // Count ballots
+    int max_vote = 0;
+    int runoff = 1;
 
-            printf("1) %s 2) %s 3) %s\n", ballots[i].candidates[0].name, ballots[i].candidates[1].name,
-                   ballots[i].candidates[2].name);
+    for (int k = 0; k < RANK_TOTAL; k++)
+    {
+
+        if (runoff == 1)
+        {
+            for (int i = 0; i < voter_count_int; i++)
+            {
+
+                int ignore_rank = 0;
+
+                for (int rank_count = 0; rank_count < RANK_TOTAL; rank_count++)
+                {
+                    char ballot_candidate[NAME_LENGTH];
+                    strcpy_s(ballot_candidate, NAME_LENGTH, ballots[i].candidates[rank_count].name);
+
+                    if (ignore_rank == 0)
+                    {
+                        // check not in ignored list
+                        for (int j = 0; j < argc - 1; j++)
+                        {
+                            if (strcmp(ballot_candidate, candidates[j].name) == 0 && candidates[j].votes > -1)
+                            {
+                                // Add vote count
+                                candidates[j].votes += 1;
+
+                                if (candidates[j].votes > max_vote)
+                                {
+                                    max_vote = candidates[j].votes;
+                                }
+
+                                ignore_rank = 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (max_vote * 2 <= voter_count_int && k < RANK_TOTAL - 1)
+            {
+
+                printf("runoff\n");
+
+                int least_vote = voter_count_int;
+
+                for (int i = 0; i < argc - 1; i++)
+                {
+                    if (candidates[i].votes > -1 && candidates[i].votes < least_vote)
+                    {
+                        least_vote = candidates[i].votes;
+                    }
+                }
+
+                for (int i = 0; i < argc - 1; i++)
+                {
+                    if (candidates[i].votes > -1)
+                    {
+                        if (candidates[i].votes == least_vote && least_vote != max_vote)
+                        {
+                            candidates[i].votes = -1;
+                        }
+                        else
+                        {
+                            candidates[i].votes = 0;
+                        }
+                    }
+                }
+
+                max_vote = 0;
+            }
+            else
+            {
+                runoff = 0;
+            }
+        }
+    }
+
+    // Print Winners
+    for (int i = 0; i < argc - 1; i++)
+    {
+        if (candidates[i].votes == max_vote)
+        {
+            printf("%s\n", candidates[i].name);
         }
     }
 
