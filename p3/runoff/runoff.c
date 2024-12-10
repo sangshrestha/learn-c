@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 {
     if (argc < 2)
     {
-        printf("Usage: plurality [candidate ...]\n");
+        printf("Usage: runoff [candidate ...]\n");
         return 1;
     }
     else if (argc > MAX)
