@@ -1,6 +1,9 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+int sort(int values[], int length);
 
 #define MAX_CANDIDATES 9
 #define MAX_VOTERS 9999
@@ -14,7 +17,7 @@ typedef struct
 } candidate;
 
 candidate candidates[MAX_CANDIDATES];
-int preferences[MAX_CANDIDATES][MAX_CANDIDATES] = {0};
+int preferences[MAX_CANDIDATES][MAX_CANDIDATES];
 
 int main(int argc, char *argv[])
 {
@@ -71,28 +74,26 @@ int main(int argc, char *argv[])
         for (int rank = 1; rank <= RANK_COUNT; rank++)
         {
             char name_input[NAME_LENGTH];
-
-            printf("Rank %d: ", rank);
-            fgets(name_input, NAME_LENGTH + 1, stdin); // + 1 to account for the \n
-            name_input[strcspn(name_input, "\n")] = 0; // replace the newline character if it exists
-
-            // Find the candidate
             int candidate_found = -1;
 
-            for (int k = 0; k < argc - 1; k++)
+            // Quality of life so program doesn't end on accidental wrong candidate
+            while (candidate_found < 0)
             {
-                // Check candiate wasn't already voted in the ballot or already found in this loop
-                if (candidate_was_voted[k] == 0 && candidate_found < 0 && strcmp(candidates[k].name, name_input) == 0)
-                {
-                    candidate_found = k;
-                    candidate_was_voted[k] = 1;
-                }
-            }
+                printf("Rank %d: ", rank);
+                fgets(name_input, NAME_LENGTH + 1, stdin); // + 1 to account for the \n
+                name_input[strcspn(name_input, "\n")] = 0; // replace the newline character if it exists
 
-            if (candidate_found < 0)
-            {
-                printf("Invalid vote\n");
-                return 6;
+                // Find the candidate
+                for (int k = 0; k < argc - 1; k++)
+                {
+                    // Check candiate wasn't already voted in the ballot or already found in this loop
+                    if (candidate_was_voted[k] == 0 && candidate_found < 0 &&
+                        strcmp(candidates[k].name, name_input) == 0)
+                    {
+                        candidate_found = k;
+                        candidate_was_voted[k] = 1;
+                    }
+                }
             }
 
             // Update preferences matrix
@@ -118,4 +119,81 @@ int main(int argc, char *argv[])
         }
         printf("\n");
     }
+
+    // Make pairs
+    int pair_count = 0;
+    int pairs[MAX_CANDIDATES][2];
+    int pair_scores[MAX_CANDIDATES];
+
+    for (int i = 0; i < argc - 1; i++)
+    {
+        for (int j = 0; j < argc - 1; j++)
+        {
+            if (j > i && preferences[i][j] != preferences[j][i])
+            {
+                int source_index;
+                int target_index;
+
+                if (preferences[i][j] > preferences[j][i])
+                {
+                    source_index = i;
+                    target_index = j;
+                }
+                else
+                {
+                    source_index = j;
+                    target_index = i;
+                }
+
+                pairs[pair_count][0] = source_index;
+                pairs[pair_count][1] = target_index;
+                pair_scores[pair_count] = preferences[source_index][target_index];
+                pair_count++;
+            }
+        }
+    }
+
+    // Print pairs
+    printf("\nPairs:\n");
+    for (int i = 0; i < pair_count; i++)
+    {
+        int source_index = pairs[i][0];
+        int target_index = pairs[i][1];
+        printf("%d, %d: %d\n", source_index, target_index, preferences[source_index][target_index]);
+    }
+
+    sort(pair_scores, pair_count);
+
+    printf("\nSorted pairs:\n");
+    for (int i = 0; i < pair_count; i++)
+    {
+        printf("%d, ", pair_scores[i]);
+    }
+}
+
+int sort(int values[], int length)
+{
+    for (int i = 0; i < length; i++)
+    {
+        int swap_flag = 0;
+
+        for (int j = 0; j < length - 1; j++)
+        {
+            if (values[j] < values[j + 1])
+            {
+                int temp = values[j];
+                values[j] = values[j + 1];
+                values[j + 1] = temp;
+                swap_flag = 1;
+            }
+        }
+
+        // Return early if no swaps made this pass
+        if (swap_flag == 0)
+        {
+            return 0;
+        }
+    }
+
+    return 0;
 }
